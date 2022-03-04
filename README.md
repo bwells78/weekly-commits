@@ -2,7 +2,7 @@
 
 Aggregates commits across an organization by week number of the current year. 
 
-This a work in progress, only outputting commits. Todos:
+This is rough and a work in progress, only outputting commits so far. Todos:
 * Improve command line output, print out date range to confirm week number dates
 * Provide percentages of work per repo based on commits and number of files changed
 * Explore providing look-through into repo folders for percentages across monorepos

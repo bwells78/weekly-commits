@@ -1,23 +1,22 @@
 import { Octokit } from 'octokit'
 import moment from 'moment'
 import util from 'util'
+import fs from 'fs'
 
 async function main() {
   const { author, weekNumber } = getArgs()
   const { start, end } = getWeekBounds(weekNumber)
+  const { org, auth } = getConfig()
 
   const spinner = startSpinner()
+  const octokit = new Octokit({ auth })
 
-  const octokit = new Octokit({
-    auth: ''
-  })
-
-  const repoList = await getRepoList(octokit)
+  const repoList = await getRepoList(octokit, org)
   const repoCommits = await Promise.all(
-    repoList.map((repo) => getCommits(octokit, repo, author, start, end))
+    repoList.map((repo) => getCommits(octokit, org, repo, author, start, end))
   )
 
-  const commitList = await getCommitListWithStats(octokit, repoCommits)
+  const commitList = await getCommitListWithStats(octokit, org, repoCommits)
 
   stopSpinner(spinner)
 
@@ -54,20 +53,22 @@ function getWeekBounds(weekNumber) {
   return { start, end }
 }
 
-async function getRepoList(octokit) {
-  const { data: repos } = await octokit.rest.repos.listForOrg({
-    org: 'ResearchAffiliates'
-  })
+function getConfig() {
+  const json = fs.readFileSync('config.json')
+  return JSON.parse(json)
+}
 
+async function getRepoList(octokit, org) {
+  const { data: repos } = await octokit.rest.repos.listForOrg({ org })
   return repos.map((r) => r.name)
 }
 
-async function getCommits(octokit, repo, author, since, until) {
+async function getCommits(octokit, owner, repo, author, since, until) {
   let commits = []
 
   try {
     const { data } = await octokit.rest.repos.listCommits({
-      owner: 'ResearchAffiliates',
+      owner,
       repo,
       author,
       since,
@@ -92,7 +93,7 @@ async function getCommits(octokit, repo, author, since, until) {
   return commits
 }
 
-async function getCommitListWithStats(octokit, repoCommits) {
+async function getCommitListWithStats(octokit, owner, repoCommits) {
   const list = repoCommits.flat()
   const commitMap = list.reduce((map, commit) => {
     map[commit.sha] = commit
@@ -101,7 +102,7 @@ async function getCommitListWithStats(octokit, repoCommits) {
 
   const responses = await Promise.all(
     list.map(({ repo, sha: ref }) =>
-      octokit.rest.repos.getCommit({ owner: 'ResearchAffiliates', repo, ref })
+      octokit.rest.repos.getCommit({ owner, repo, ref })
     )
   )
 
