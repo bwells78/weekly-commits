@@ -1,0 +1,11 @@
+{
+  "name": "weekly-commits",
+  "version": "1.0.0",
+  "description": "aggregated commit log across all repos by week",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "moment": "^2.29.1",
+    "octokit": "^1.7.1"
+  }
+}
