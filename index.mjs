@@ -1,14 +1,15 @@
 import { Octokit } from 'octokit'
 import moment from 'moment'
-import util from 'util'
 import fs from 'fs'
 
-async function main() {
-  const { author, weekNumber } = getArgs()
-  const { start, end } = getWeekBounds(weekNumber)
-  const { org, auth } = getConfig()
+const DATE_FORMAT = 'MMM D YYYY'
 
-  const spinner = startSpinner()
+async function main() {
+  const { org, auth } = getConfig()
+  const { author, weekNumber } = getArgs()
+  const { start, startDisplay, end, endDisplay } = getWeekBounds(weekNumber)
+
+  const spinner = startSpinner(author, weekNumber, startDisplay, endDisplay)
   const octokit = new Octokit({ auth })
 
   const repoList = await getRepoList(octokit, org)
@@ -20,7 +21,7 @@ async function main() {
 
   stopSpinner(spinner)
 
-  process.stdout.write(`\r${util.format(commitList)}`)
+  console.log(commitList)
 }
 
 function getArgs() {
@@ -34,23 +35,28 @@ function getArgs() {
 function getWeekBounds(weekNumber) {
   const week = moment().weeks(weekNumber)
   const start = week
+    .clone()
     .day(0)
     .utc()
     .hour(0)
     .minute(0)
     .second(0)
     .millisecond(0)
-    .toDate()
   const end = week
+    .clone()
     .day(7)
     .utc()
     .hour(0)
     .minute(0)
     .second(0)
     .millisecond(0)
-    .toDate()
 
-  return { start, end }
+  return {
+    start: start.toDate(),
+    startDisplay: start.format(DATE_FORMAT),
+    end: end.toDate(),
+    endDisplay: end.format(DATE_FORMAT)
+  }
 }
 
 function getConfig() {
@@ -113,18 +119,23 @@ async function getCommitListWithStats(octokit, owner, repoCommits) {
   return list
 }
 
-function startSpinner() {
+function startSpinner(author, weekNumber, start, end) {
   const P = ['\\', '|', '/', '-']
   let x = 0
 
   return setInterval(() => {
-    process.stdout.write(`\rRetrieving commits between X and Y ${P[x++]}`)
+    process.stdout.write(
+      `\rRetrieving ${author}'s commits for week ${weekNumber} between ${start} and ${end} ${
+        P[x++]
+      }`
+    )
     x %= P.length
   }, 250)
 }
 
 function stopSpinner(spinner) {
   clearInterval(spinner)
+  process.stdout.write('\r\n')
 }
 
 main()
