@@ -4,6 +4,9 @@
   "description": "aggregated commit log across all repos by week",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "commits": "node index.mjs"
+  },
   "dependencies": {
     "moment": "^2.29.1",
     "octokit": "^1.7.1"

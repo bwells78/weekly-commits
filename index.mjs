@@ -33,7 +33,15 @@ function getArgs() {
 }
 
 function getWeekBounds(weekNumber) {
-  const week = moment().weeks(weekNumber)
+  const today = moment()
+
+  if (today.week() < weekNumber) {
+    today.subtract(1, 'years')
+  }
+
+  const week = today.clone().weeks(weekNumber)
+
+  // Midnight Sunday morning
   const start = week
     .clone()
     .day(0)
@@ -42,6 +50,8 @@ function getWeekBounds(weekNumber) {
     .minute(0)
     .second(0)
     .millisecond(0)
+
+  // Midnight next Monday morning
   const end = week
     .clone()
     .day(7)
